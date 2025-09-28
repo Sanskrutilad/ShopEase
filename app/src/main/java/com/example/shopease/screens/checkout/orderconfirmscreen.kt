@@ -1,6 +1,7 @@
 package com.example.shopease.screens.checkout
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -146,7 +147,7 @@ fun OrderProductItem(product: Product, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp).clickable{},
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF8E8E1))
     ) {
         Row(

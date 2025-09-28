@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -23,41 +24,59 @@ import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// Simple data class to hold order information with orderId
+data class OrderWithId(
+    val orderId: String,
+    val items: List<CartItem>? = null,
+    val product: Product? = null,
+    val timestamp: Long,
+    val totalAmount: Double,
+    val trackingId: String? = null,
+    val orderStatus: String? = null
+)
+
 @Composable
 fun ProfileScreen(navController: NavController) {
     val uid = FirebaseAuth.getInstance().currentUser?.uid
-    val cartOrders = remember { mutableStateListOf<Triple<List<CartItem>, Long,Double>>() }
-    val productOrders = remember { mutableStateListOf<Triple<Product, Long,Double>>() }
-
+    val cartOrders = remember { mutableStateListOf<OrderWithId>() }
+    val productOrders = remember { mutableStateListOf<OrderWithId>() }
 
     var name by remember { mutableStateOf("Loading...") }
     var email by remember { mutableStateOf("Loading...") }
 
     LaunchedEffect(uid) {
         uid?.let {
-            val dbRef = FirebaseDatabase.getInstance().getReference("orders").child(uid)
+            val dbRef = FirebaseDatabase.getInstance().getReference("orders").child(it)
             dbRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     cartOrders.clear()
                     productOrders.clear()
 
                     for (orderSnap in snapshot.children) {
+                        val orderId = orderSnap.key ?: ""
                         val timestamp = orderSnap.child("timestamp").getValue(Long::class.java) ?: 0L
                         val totalAmount = orderSnap.child("totalAmount").getValue(Double::class.java) ?: 0.0
+                        val trackingId = orderSnap.child("trackingId").getValue(String::class.java)
+                        val orderStatus = orderSnap.child("orderStatus").getValue(String::class.java) ?: "confirmed"
 
                         if (orderSnap.child("items").exists()) {
                             val items = orderSnap.child("items").children.mapNotNull {
                                 it.getValue(CartItem::class.java)
                             }
-                            cartOrders.add(Triple(items, timestamp, totalAmount))
-                        } else {
+                            cartOrders.add(OrderWithId(orderId, items = items, timestamp = timestamp,
+                                totalAmount = totalAmount, trackingId = trackingId, orderStatus = orderStatus))
+                        } else if (orderSnap.child("orderedItems").exists()) {
                             val product = orderSnap.child("orderedItems").children.firstOrNull()?.getValue(Product::class.java)
                             if (product != null) {
-                                productOrders.add(Triple(product, timestamp, totalAmount))
+                                productOrders.add(OrderWithId(orderId, product = product, timestamp = timestamp,
+                                    totalAmount = totalAmount, trackingId = trackingId, orderStatus = orderStatus))
                             }
+                        } else {
+                            // Fallback for orders without items/orderedItems
+                            cartOrders.add(OrderWithId(orderId, timestamp = timestamp,
+                                totalAmount = totalAmount, trackingId = trackingId, orderStatus = orderStatus))
                         }
                     }
-
                 }
 
                 override fun onCancelled(error: DatabaseError) {}
@@ -81,7 +100,6 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 
-
     Scaffold(
         topBar = {
             TopBar(
@@ -89,7 +107,8 @@ fun ProfileScreen(navController: NavController) {
                 onSearchClick = {}, onSearchChange = {}
             )
         },
-        bottomBar = { BottomBar(navController) },containerColor = Color(0xFFB2E4FF)
+        bottomBar = { BottomBar(navController) },
+        containerColor = Color(0xFFB2E4FF)
     ) { innerPadding ->
         Column(
             modifier = Modifier.background(Color(0xFFCDEFF5))
@@ -108,12 +127,12 @@ fun ProfileScreen(navController: NavController) {
             val currentUser = FirebaseAuth.getInstance().currentUser
 
             if (currentUser != null) {
-                // ✅ Logged in → Show Logout button
+                // Logout Button
                 Button(
                     onClick = {
                         FirebaseAuth.getInstance().signOut()
                         navController.navigate("login") {
-                            popUpTo("home") { inclusive = true } // or your start destination
+                            popUpTo("home") { inclusive = true }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC407A))
@@ -121,7 +140,7 @@ fun ProfileScreen(navController: NavController) {
                     Text("Logout", color = Color.White)
                 }
             } else {
-                // ❌ Not logged in → Show Login button
+                // Login Button
                 Button(
                     onClick = {
                         navController.navigate("login")
@@ -132,75 +151,54 @@ fun ProfileScreen(navController: NavController) {
                 }
             }
 
-
             Spacer(modifier = Modifier.height(32.dp))
             Text("🧾 Past Orders", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
             Spacer(modifier = Modifier.height(10.dp))
 
-            cartOrders.forEach { (items, timestamp, totalAmount) ->
-                val date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(timestamp))
-                Card(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(Color.White),
-                    elevation = CardDefaults.cardElevation(4.dp)) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("📅 $date")
-                        items.forEach { item ->
-                            Text("${item.name} x${item.quantity}")
-                            if (!item.ebookUrl.isNullOrEmpty()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                TextButton(onClick = {
-                                    val intent = android.content.Intent(
-                                        android.content.Intent.ACTION_VIEW,
-                                        android.net.Uri.parse(item.ebookUrl)
-                                    )
-                                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    navController.context.startActivity(intent)
-                                }) {
-                                    Text("📘 Open eBook", color = Color(0xFF4A7C59))
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Total: ₹$totalAmount", fontWeight = FontWeight.SemiBold)
+            // Display cart orders with click functionality
+            cartOrders.forEach { order ->
+                OrderCard(
+                    order = order,
+                    isCartOrder = true,
+                    onOrderClick = { orderId ->
+                        navController.navigate("order_tracking/$orderId")
                     }
-                }
+                )
             }
 
-            productOrders.forEach { (product, timestamp, totalAmount) ->
-                val date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(timestamp))
-                Card(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
+            // Display product orders with click functionality
+            productOrders.forEach { order ->
+                OrderCard(
+                    order = order,
+                    isCartOrder = false,
+                    onOrderClick = { orderId ->
+                        navController.navigate("order_tracking/$orderId")
+                    }
+                )
+            }
+
+            // Show message if no orders
+            if (cartOrders.isEmpty() && productOrders.isEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
                     shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(Color.White),
-                    elevation = CardDefaults.cardElevation(4.dp)) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("📅 $date")
-                        Text(product.name)
-                        if (!product.ebookUrl.isNullOrEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            TextButton(onClick = {
-                                val intent = android.content.Intent(
-                                    android.content.Intent.ACTION_VIEW,
-                                    android.net.Uri.parse(product.ebookUrl)
-                                )
-                                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                navController.context.startActivity(intent)
-                            }) {
-                                Text("📘 Open eBook", color = Color(0xFF4A7C59))
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Total: ₹$totalAmount", fontWeight = FontWeight.SemiBold)
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("No orders yet!", fontSize = 16.sp, color = Color.Gray)
+                        Text("Start shopping to see your orders here", fontSize = 14.sp, color = Color.LightGray)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-            Text("ℹ️ Help & Info", fontSize = 20.sp, fontWeight = FontWeight.SemiBold,color = Color(0xFFEC407A))
+            Text("ℹ️ Help & Info", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
 
             Spacer(modifier = Modifier.height(16.dp))
             val showDialog = remember { mutableStateOf(false) }
@@ -226,7 +224,7 @@ fun ProfileScreen(navController: NavController) {
                     onDismissRequest = { showDialog.value = false },
                     confirmButton = {
                         TextButton(onClick = { showDialog.value = false }) {
-                            Text("OK",color = Color(0xFFEC407A))
+                            Text("OK", color = Color(0xFFEC407A))
                         }
                     },
                     title = { Text(text = selectedLabel.value) },
@@ -265,12 +263,96 @@ fun ProfileScreen(navController: NavController) {
                                 else -> ""
                             },
                             color = Color.Black
-
                         )
                     },
                     containerColor = Color(0xFFFEC8D8)
                 )
             }
         }
+    }
+}
+
+@Composable
+fun OrderCard(
+    order: OrderWithId,
+    isCartOrder: Boolean,
+    onOrderClick: (String) -> Unit
+) {
+    val date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(order.timestamp))
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clickable { onOrderClick(order.orderId) },
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(Color.White),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            // Order header with status and click indicator
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("📅 $date", fontWeight = FontWeight.SemiBold)
+                    order.trackingId?.let { trackingId ->
+                        Text("Tracking: $trackingId", fontSize = 12.sp, color = Color.Gray)
+                    }
+                }
+
+                // Status indicator
+                OrderStatusIndicator(order.orderStatus ?: "confirmed")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Order items
+            if (isCartOrder && order.items != null) {
+                order.items.forEach { item ->
+                    Text("• ${item.name} x${item.quantity}")
+                    if (!item.ebookUrl.isNullOrEmpty()) {
+                        Text("   📘 eBook available", color = Color(0xFF4A7C59), fontSize = 12.sp)
+                    }
+                }
+            } else if (!isCartOrder && order.product != null) {
+                Text("• ${order.product.name}")
+                if (!order.product.ebookUrl.isNullOrEmpty()) {
+                    Text("   📘 eBook available", color = Color(0xFF4A7C59), fontSize = 12.sp)
+                }
+            } else {
+                Text("• Order details loading...", color = Color.Gray)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Total: ₹${order.totalAmount}", fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
+            Text("Tap to track order →", fontSize = 12.sp, color = Color.Gray, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+        }
+    }
+}
+
+@Composable
+fun OrderStatusIndicator(orderStatus: String) {
+    val (statusText, statusColor) = when (orderStatus) {
+        "delivered" -> "Delivered" to Color(0xFF4CAF50)
+        "shipped" -> "Shipped" to Color(0xFF2196F3)
+        "out_for_delivery" -> "Out for Delivery" to Color(0xFFFF9800)
+        "packed" -> "Packed" to Color(0xFF9C27B0)
+        else -> "Confirmed" to Color(0xFF607D8B)
+    }
+
+    Box(
+        modifier = Modifier
+            .background(statusColor.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = statusText,
+            color = statusColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }

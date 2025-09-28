@@ -17,6 +17,7 @@ import com.example.shopease.screens.ProductDetailScreen
 import com.example.shopease.screens.ProductListScreen
 import com.example.shopease.screens.SplashScreen
 import com.example.shopease.screens.checkout.OrderConfirmationScreen
+import com.example.shopease.screens.checkout.OrderTrackingScreen
 import com.example.shopease.screens.checkout.PaymentOptionsScreen
 import com.example.shopease.screens.checkout.ShippingInfoScreen
 import com.example.shopease.screens.checkout.SingleOrderScreen
@@ -137,6 +138,13 @@ fun AppNavigation(navController: NavHostController) {
             } else {
                 Text("Loading product...", modifier = Modifier.padding(16.dp))
             }
+        }
+        composable("order_tracking/{orderId}") { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId")
+            OrderTrackingScreen(
+                orderId = orderId,
+                navController = navController
+            )
         }
     }
 }

@@ -73,7 +73,16 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
             "pincode" to vm.pincode,
             "totalAmount" to vm.totalAmount,
             "timestamp" to System.currentTimeMillis(),
-            "paymentId" to razorpayPaymentID
+            "paymentId" to razorpayPaymentID,
+            "orderStatus" to "confirmed",
+            "trackingId" to generateTrackingId(),
+            "orderStages" to hashMapOf(
+                "confirmed" to System.currentTimeMillis(),
+                "packed" to null,
+                "shipped" to null,
+                "out_for_delivery" to null,
+                "delivered" to null
+            )
         )
 
         // Add coupon if applied
@@ -93,7 +102,7 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
                     "price" to product.price,
                     "description" to product.description,
                     "imageUrl" to product.imageUrls,
-                    "ebookUrl" to product.ebookUrl // Will be null if not present
+                    "ebookUrl" to product.ebookUrl
                 )
             }
         }
@@ -106,25 +115,38 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
                     "price" to item.price,
                     "quantity" to item.quantity,
                     "imageUrl" to item.imageUrl,
-                    "ebookUrl" to item.ebookUrl // Optional
+                    "ebookUrl" to item.ebookUrl
                 )
             }
         }
 
         // Push order to Firebase
         val database = FirebaseDatabase.getInstance().reference
-        database.child("orders").child(userId).push().setValue(baseOrderData)
+        val orderRef = database.child("orders").child(userId).push()
+        val orderId = orderRef.key
+
+        baseOrderData["orderId"] = orderId
+
+        orderRef.setValue(baseOrderData)
             .addOnSuccessListener {
                 if (vm.cartOrderedItems.isNotEmpty()) {
                     database.child("carts").child(userId).removeValue()
                 }
                 sendOrderNotification(ctx)
                 Toast.makeText(ctx, "Order saved!", Toast.LENGTH_SHORT).show()
+
+                // Navigate to order tracking with order ID
                 nav.navigate("order_confirmation")
             }
             .addOnFailureListener {
                 Toast.makeText(ctx, "Failed to save order", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun generateTrackingId(): String {
+        val timestamp = System.currentTimeMillis()
+        val random = (1000..9999).random()
+        return "TRK${timestamp}${random}"
     }
 
 

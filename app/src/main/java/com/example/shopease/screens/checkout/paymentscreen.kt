@@ -168,7 +168,7 @@ fun startRazorpayCheckout(
     userPhone: String
 ) {
     val checkout = Checkout()
-    checkout.setKeyID("rzp_test_hIiBeJZ7yburq7")
+    checkout.setKeyID("rzp_test_RMsHiDScug3dt6")
     try {
         val options = JSONObject().apply {
             put("name", "Baby Dino")

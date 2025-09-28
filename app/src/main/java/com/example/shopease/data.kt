@@ -23,3 +23,4 @@ data class CartItem(
     val imageUrl: String = "",
     val ebookUrl: String? = null
 )
+
