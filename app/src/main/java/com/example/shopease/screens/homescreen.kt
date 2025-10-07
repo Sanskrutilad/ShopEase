@@ -8,14 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +27,6 @@ import com.example.shopease.components.BottomBar
 import com.example.shopease.components.TopBar
 import com.example.shopease.viewmodels.BannerViewModel
 import com.example.shopease.viewmodels.ProductViewModel
-
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: ProductViewModel = viewModel()) {
@@ -54,20 +51,25 @@ fun HomeScreen(navController: NavController, viewModel: ProductViewModel = viewM
                 onSearchChange = { searchQuery = it },
                 onSearchClick = { isSearching = !isSearching }
             )
-        }, bottomBar = { BottomBar(navController) }
+        },
+        bottomBar = { BottomBar(navController) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(Color(0xFFCDEFF5))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                    )
+                )
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             HeroBannerCarousel()
-            Spacer(modifier = Modifier.height(15.dp))
+            //Spacer(modifier = Modifier.height(16.dp))
             CategorySection(navController)
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             ProductHorizontalSection("Exclusive Picks", products, navController)
         }
     }
@@ -80,72 +82,36 @@ fun HeroBannerCarousel(viewModel: BannerViewModel = viewModel()) {
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp), // Optional, to control row height
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .height(200.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         items(banners.size) { index ->
             Card(
                 modifier = Modifier
-                    .fillParentMaxWidth(0.7f) // Takes 70% of the LazyRow width
-                    .aspectRatio(1.6f),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                AsyncImage(
-                    model = banners[index],
-                    contentDescription = "Banner",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-    }
-
-}
-
-
-@Composable
-fun CategorySection(navController: NavController) {
-    Text(
-        text = "Shop by Category",
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(start = 16.dp, bottom = 12.dp),
-        color = Color(0xFF1B1464), // Darker pink
-        fontSize = 21.sp,
-        fontWeight = FontWeight.Bold
-    )
-
-    val categories = listOf("Toys", "E-books", "Beauty", "General")
-
-    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
-        items(categories.size) { index ->
-            val category = categories[index]
-
-            Card(
-                modifier = Modifier
-                    .padding(end = 8.dp)
-                    .width(120.dp)
-                    .height(70.dp)
-                    .clickable {
-                        val encodedCategory = java.net.URLEncoder.encode(category, "UTF-8")
-                        navController.navigate("category/$encodedCategory")
-                    },
+                    .fillParentMaxWidth(0.75f)
+                    .aspectRatio(1.7f)
+                    .shadow(8.dp, RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF5D3DE) // light pink background
-                ),
-                elevation = CardDefaults.cardElevation(4.dp)
+                elevation = CardDefaults.cardElevation(6.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = category,
-                        color = Color(0xFFEC407A), // matching text color
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                Box {
+                    AsyncImage(
+                        model = banners[index],
+                        contentDescription = "Banner",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, Color(0xAA000000))
+                                )
+                            )
                     )
                 }
             }
@@ -153,25 +119,80 @@ fun CategorySection(navController: NavController) {
     }
 }
 
+@Composable
+fun CategorySection(navController: NavController) {
+    Text(
+        text = "Shop by Category",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
+        color = Color(0xFF4B0082), // Indigo
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Bold
+    )
+
+    val categories = listOf("Toys", "E-books", "Beauty", "General")
+    val categoryColors = listOf(
+        Color(0xFFFFC1E3), Color(0xFFFFE0B2),
+        Color(0xFFD1C4E9), Color(0xFFA5D6A7)
+    )
+
+    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp)) {
+        items(categories.size) { index ->
+            val category = categories[index]
+            val bgColor = categoryColors[index % categoryColors.size]
+
+            Card(
+                modifier = Modifier
+                    .padding(end = 12.dp)
+                    .width(130.dp)
+                    .height(80.dp)
+                    .clickable {
+                        val encodedCategory = java.net.URLEncoder.encode(category, "UTF-8")
+                        navController.navigate("category/$encodedCategory")
+                    }
+                    .shadow(6.dp, RoundedCornerShape(25.dp)),
+                shape = RoundedCornerShape(25.dp),
+                colors = CardDefaults.cardColors(containerColor = bgColor),
+                elevation = CardDefaults.cardElevation(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Optional: Add icons here with painterResource
+                        Text(
+                            text = category,
+                            color = Color(0xFF4B0082),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun ProductHorizontalSection(title: String, products: List<Product>, navController: NavController) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = 16.dp, top = 12.dp, bottom = 12.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, top = 12.dp, bottom = 12.dp)
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            color = Color(0xFF1B1464), // Darker, readable pink
-            fontSize = 22.sp,
+            color = Color(0xFF4B0082),
+            fontSize = 23.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
+            modifier = Modifier.padding(bottom = 14.dp)
         )
 
         LazyRow(
-            contentPadding = PaddingValues(start = 0.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(end = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(products.size) { index ->
                 ProductCard(product = products[index], navController = navController)
@@ -180,53 +201,58 @@ fun ProductHorizontalSection(title: String, products: List<Product>, navControll
     }
 }
 
-
 @Composable
 fun ProductCard(product: Product, navController: NavController) {
-
     Card(
         modifier = Modifier
-            .padding(end = 12.dp)
-            .clickable {
-                navController.navigate("product_detail/${product.productId}")
-            }
-
-            .width(160.dp)
-            .height(240.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5D3DE)), // Cotton white
-        elevation = CardDefaults.cardElevation(4.dp)
+            .width(170.dp)
+            .height(270.dp)
+            .clickable { navController.navigate("product_detail/${product.productId}") }
+            .shadow(6.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
-        Column(
+        // Gradient background inside the card
+        Box(
             modifier = Modifier
-                .padding(10.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFFFF0F5), Color(0xFFFFE6F0))
+                    )
+                )
         ) {
-            AsyncImage(
-                model = product.imageUrls.firstOrNull() ?: "", // Updated here
-                contentDescription = product.name,
-                contentScale = ContentScale.Fit,
+            Column(
                 modifier = Modifier
-                    .height(120.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-            )
-            Spacer(modifier = Modifier.height(25.dp))
-            Text(
-                product.name,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFEC407A) // Rose Pink
-            )
-            Text(
-                "₹${product.price}",
-                fontSize = 18.sp,
-                color = Color(0xFF0D0E0E) // Cool Gray
-            )
+                    .padding(12.dp)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AsyncImage(
+                    model = product.imageUrls.firstOrNull() ?: "",
+                    contentDescription = product.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .height(130.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    product.name,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFDA1884)
+                )
+                Text(
+                    "₹${product.price}",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF2F2F2F)
+                )
+            }
         }
     }
 
 }
-
 

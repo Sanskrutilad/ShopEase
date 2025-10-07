@@ -4,8 +4,10 @@ package com.example.shopease.screens.checkout
 import android.app.Activity
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,8 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -42,13 +47,9 @@ fun PaymentOptionsScreen(
     var availableCoupons by remember { mutableStateOf<List<Coupon>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        // Always reset coupon and totalAmount to originalAmount
         viewModel.selectedCoupon = null
         viewModel.totalAmount = viewModel.originalAmount
     }
-
-    //Log.d("checkout", "originalAmount: ${viewModel.originalAmount}, totalAmount: ${viewModel.totalAmount}")
-
 
     Scaffold(
         topBar = {
@@ -60,19 +61,75 @@ fun PaymentOptionsScreen(
                 onSearchChange = {}
             )
         },
-        bottomBar = { BottomBar(navController) },containerColor = Color(0xFFCDEFF5)
+        bottomBar = { BottomBar(navController) }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize().background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                    )
+                )
                 .padding(innerPadding)
-                .padding(24.dp),
+                .padding(24.dp)
+                ,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("💳 Payment", fontSize = 22.sp,color = Color(0xFFEC407A))
+
+            // Header
+            Text(
+                "💳 Payment",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFEC407A)
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Please confirm your payment.")
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(6.dp, RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE6F0)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        "💡 Payment Summary",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFEC407A)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Total Amount: ₹${viewModel.totalAmount}",
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
+                    if (viewModel.selectedCoupon != null) {
+                        Text(
+                            "Coupon Applied: ${viewModel.selectedCoupon?.code} - ${viewModel.selectedCoupon?.discount}% off",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    } else {
+                        Text(
+                            "No coupon applied",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Coupon Button
             Button(
@@ -84,12 +141,14 @@ fun PaymentOptionsScreen(
                             }.filter { it.active }
                             showCouponDialog = true
                         }
-                }
-                ,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEC8D8))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEC8D8)),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text("🎟️ Apply Coupon",fontSize = 18.sp,color =Color(0xFFEC407A))
+                Text("🎟️ Apply Coupon", fontSize = 18.sp, color = Color(0xFFEC407A))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -114,28 +173,34 @@ fun PaymentOptionsScreen(
                         Toast.makeText(context, "Context error", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(Color(0xFFFEC8D8))
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEC8D8)),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Pay ₹${viewModel.totalAmount}", color = Color(0xFFEC407A), fontSize = 18.sp)
+                Text("Pay ₹${viewModel.totalAmount}", fontSize = 18.sp, color = Color(0xFFEC407A))
             }
         }
 
+        // Coupon Dialog
         if (showCouponDialog) {
             AlertDialog(
                 onDismissRequest = { showCouponDialog = false },
                 title = { Text("Select a Coupon") },
                 text = {
                     if (availableCoupons.isEmpty()) {
-                        Text("No active coupons available.")
+                        Text("No coupons available.")
                     } else {
                         Column {
                             availableCoupons.forEach { coupon ->
+                                val isActive = coupon.active
                                 Text(
-                                    text = "${coupon.code} - ${coupon.discount.toDouble()}%",
+                                    text = "${coupon.code} - ${coupon.discount.toDouble()}%" + if (!isActive) " (Inactive)" else "",
+                                    color = if (isActive) Color.Black else Color.Gray,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
+                                        .clickable(enabled = isActive) {
                                             viewModel.selectedCoupon = coupon
                                             val discounted = viewModel.originalAmount * (1 - coupon.discount.toDouble() / 100)
                                             viewModel.totalAmount = discounted
@@ -145,7 +210,6 @@ fun PaymentOptionsScreen(
                                         .padding(vertical = 8.dp)
                                 )
                             }
-
                         }
                     }
                 },
@@ -156,8 +220,10 @@ fun PaymentOptionsScreen(
                 }
             )
         }
+
     }
 }
+
 
 fun startRazorpayCheckout(
     context: Context,

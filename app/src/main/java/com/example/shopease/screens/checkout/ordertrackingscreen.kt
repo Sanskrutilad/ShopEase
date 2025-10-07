@@ -13,10 +13,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -52,53 +54,71 @@ fun OrderTrackingScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Order Tracking") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                windowInsets = WindowInsets(0)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                )
+            )
+    ) {
+        // Heading and back button at the top
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(25.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFF4B0082))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "🛍️ Order Tracking",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                color = Color(0xFF4B0082)
             )
         }
-    ) { padding ->
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (orderData != null) {
-            OrderTrackingContent(
-                orderData = orderData!!,
-                modifier = Modifier.padding(padding)
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Order not found", color = Color.Gray)
+
+        // Content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 72.dp) // padding to avoid overlap with heading
+        ) {
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color(0xFFEC407A))
+                    }
+                }
+
+                orderData != null -> {
+                    OrderTrackingContent(orderData = orderData!!)
+                }
+
+                else -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Order not found", color = Color.Gray)
+                    }
+                }
             }
         }
     }
 }
 
+
 @Composable
-fun OrderTrackingContent(orderData: Map<String, Any>, modifier: Modifier = Modifier) {
+fun OrderTrackingContent(orderData: Map<String, Any>) {
     val stages = getOrderStages(orderData)
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         item {
             OrderHeaderSection(orderData)
@@ -107,20 +127,36 @@ fun OrderTrackingContent(orderData: Map<String, Any>, modifier: Modifier = Modif
 
         item {
             Text(
-                "Order Status",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
+                "📦 Order Status",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4B0082),
+                fontSize = 18.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
             OrderTimeline(stages = stages)
             Spacer(modifier = Modifier.height(24.dp))
         }
 
         item {
+            Text(
+                "🛒 Items in Order",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4B0082),
+                fontSize = 18.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
             OrderItemsSection(orderData)
             Spacer(modifier = Modifier.height(24.dp))
         }
 
         item {
+            Text(
+                "📍 Delivery Address",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4B0082),
+                fontSize = 18.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
             OrderAddressSection(orderData)
         }
     }
@@ -141,19 +177,16 @@ fun OrderHeaderSection(orderData: Map<String, Any>) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    "Order",
-                    style = MaterialTheme.typography.titleLarge
-                )
+                Text("Order", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 OrderStatusChip(orderStatus = orderStatus)
             }
 
@@ -161,7 +194,6 @@ fun OrderHeaderSection(orderData: Map<String, Any>) {
 
             Text(
                 "Placed on ${formatDate(timestamp)}",
-                style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
 
@@ -169,12 +201,91 @@ fun OrderHeaderSection(orderData: Map<String, Any>) {
 
             Text(
                 "Total: ₹$totalAmount",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp,
+                color = Color(0xFFEC407A)
             )
         }
     }
 }
+
+@Composable
+fun OrderTimeline(stages: List<OrderStage>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            stages.forEachIndexed { index, stage ->
+                TimelineItem(
+                    stage = stage,
+                    isFirst = index == 0,
+                    isLast = index == stages.size - 1
+                )
+                if (index < stages.size - 1) Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun OrderItemsSection(orderData: Map<String, Any>) {
+    val items = getOrderItems(orderData)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Order Items (${items.size})",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            items.forEachIndexed { index, item ->
+                OrderItemRow(item)
+                if (index < items.size - 1) Divider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun OrderAddressSection(orderData: Map<String, Any>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Delivery Address",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(orderData["name"] as? String ?: "", fontWeight = FontWeight.SemiBold)
+            Text(orderData["phone"] as? String ?: "", color = Color.Gray)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(orderData["address"] as? String ?: "")
+            Text(
+                "${orderData["city"] as? String ?: ""}, ${orderData["state"] as? String ?: ""} - ${orderData["pincode"] as? String ?: ""}",
+                color = Color.Gray
+            )
+        }
+    }
+}
+
 
 @Composable
 fun OrderStatusChip(orderStatus: String) {
@@ -196,30 +307,6 @@ fun OrderStatusChip(orderStatus: String) {
             color = textColor,
             fontWeight = FontWeight.Medium
         )
-    }
-}
-
-@Composable
-fun OrderTimeline(stages: List<OrderStage>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            stages.forEachIndexed { index, stage ->
-                TimelineItem(
-                    stage = stage,
-                    isFirst = index == 0,
-                    isLast = index == stages.size - 1
-                )
-
-                if (index < stages.size - 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
     }
 }
 
@@ -283,33 +370,6 @@ fun VerticalLine() {
 }
 
 @Composable
-fun OrderItemsSection(orderData: Map<String, Any>) {
-    val items = getOrderItems(orderData)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                "Order Items (${items.size})",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            items.forEachIndexed { index, item ->
-                OrderItemRow(item)
-                if (index < items.size - 1) {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun OrderItemRow(item: Map<String, Any>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -355,34 +415,6 @@ fun OrderItemRow(item: Map<String, Any>) {
     }
 }
 
-@Composable
-fun OrderAddressSection(orderData: Map<String, Any>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                "Delivery Address",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            Text(orderData["name"] as? String ?: "", style = MaterialTheme.typography.bodyMedium)
-            Text(orderData["phone"] as? String ?: "", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(orderData["address"] as? String ?: "", style = MaterialTheme.typography.bodySmall)
-            Text(
-                "${orderData["city"] as? String ?: ""}, ${orderData["state"] as? String ?: ""} - ${orderData["pincode"] as? String ?: ""}",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
-}
 
 // Helper data class for timeline
 data class OrderStage(

@@ -43,6 +43,50 @@ class CheckoutViewModel : ViewModel() {
             Log.e("CheckoutViewModel", "Failed to fetch last order: ${it.message}")
         }
     }
+    // Keep a copy of the last fetched address
+    private var lastSavedName = ""
+    private var lastSavedAddress = ""
+    private var lastSavedCity = ""
+    private var lastSavedState = ""
+    private var lastSavedPincode = ""
+    private var lastSavedPhone = ""
+
+    // Call this after fetching user details
+    fun saveLastFetchedAddress() {
+        lastSavedName = name
+        lastSavedAddress = address
+        lastSavedCity = city
+        lastSavedState = state
+        lastSavedPincode = pincode
+        lastSavedPhone = phone
+    }
+
+    // Check if user changed the address
+    fun hasAddressChanged(): Boolean {
+        return name != lastSavedName ||
+                address != lastSavedAddress ||
+                city != lastSavedCity ||
+                state != lastSavedState ||
+                pincode != lastSavedPincode ||
+                phone != lastSavedPhone
+    }
+
+    // Update user address in Firebase
+    fun updateUserAddressInFirebase(uid: String) {
+        val userRef = FirebaseDatabase.getInstance().getReference("users").child(uid)
+        val updatedData = mapOf(
+            "name" to name,
+            "address" to address,
+            "city" to city,
+            "state" to state,
+            "pincode" to pincode,
+            "phone" to phone
+        )
+        userRef.updateChildren(updatedData).addOnSuccessListener {
+            // Save new address as lastSaved
+            saveLastFetchedAddress()
+        }
+    }
 
 
 }

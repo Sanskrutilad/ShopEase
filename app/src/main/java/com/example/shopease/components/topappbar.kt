@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,15 +44,28 @@ fun TopBar(
                 TextField(
                     value = searchQuery,
                     onValueChange = onSearchChange,
-                    placeholder = { Text("Search products") },
+                    placeholder = {
+                        Text(
+                            "Search products",color = Color.White
+                        )
+                    },
                     singleLine = true,
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFF9EDCEA),
-                        unfocusedContainerColor = Color(0xFF9EDCEA),
-                        disabledContainerColor = Color(0xFF9EDCEA))
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF9BC7EE),
+                        unfocusedContainerColor = Color(0xFF9BC7EE),
+                        disabledContainerColor = Color(0xFF9BC7EE),
+                        focusedTextColor = Color.Black,      // 👈 actual text color
+                        unfocusedTextColor = Color.Black,    // 👈 actual text color
+                        disabledTextColor = Color.Black,
+                        cursorColor = Color.Black,           // 👈 cursor visible
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
                 )
+
             } else {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Bottom
                 ) {
                     Spacer(modifier = Modifier.width(8.dp))
 //                    Image(
@@ -62,8 +76,8 @@ fun TopBar(
 //                            .padding(end = 8.dp)
 //                    )
                     Text(
-                        text = "Baby Dino",
-                        color = Color(0xFF0A196C),
+                        text = "ShopEase",
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 32.sp
                     )
@@ -72,17 +86,16 @@ fun TopBar(
         },
         actions = {
             IconButton(onClick = onSearchClick) {
-                Icon(Icons.Default.Search, contentDescription = "Search",tint = Color.Black)
+                Icon(Icons.Default.Search, contentDescription = "Search",tint = Color.White)
             }
             IconButton(onClick = { navController.navigate("cartscreen")}) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = "Cart",tint = Color.Black)
+                Icon(Icons.Default.ShoppingCart, contentDescription = "Cart",tint = Color.White)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFF9EDCEA)
-
+            containerColor =  Color(0xFF9BC7EE)
         ),
-        windowInsets = WindowInsets(0)
+        modifier = Modifier.height(95.dp)
     )
 }
 

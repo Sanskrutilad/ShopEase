@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -46,17 +47,21 @@ fun SignupScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize().background(Color(0xFFCDEFF5))
+            .fillMaxSize().background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                )
+            )
             .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Sign Up", fontSize = 35.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFA9EB9))
+        Text("Sign Up", fontSize = 35.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF5759A))
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(value = fullName,
             onValueChange = { fullName = it },
-            label = { Text("Full Name",color = Color(0xFFFA9EB9)) },
+            label = { Text("Full Name",color = Color(0xFFF5759A)) },
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
@@ -68,7 +73,7 @@ fun SignupScreen(
             ))
         OutlinedTextField(value = email,
             onValueChange = { email = it },
-            label = { Text("Email",color = Color(0xFFFA9EB9)) },
+            label = { Text("Email",color = Color(0xFFF5759A)) },
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
@@ -81,7 +86,7 @@ fun SignupScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password",color =Color(0xFFFA9EB9)) },
+            label = { Text("Password",color =Color(0xFFF5759A)) },
             visualTransformation = PasswordVisualTransformation(),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
@@ -126,7 +131,7 @@ fun SignupScreen(
                 .addOnFailureListener {
                     errorMessage = it.message
                 }
-        },colors = ButtonDefaults.buttonColors(Color(0xFFFA9EB9))) {
+        },colors = ButtonDefaults.buttonColors(Color(0xFFF5759A))) {
 
             Text("Create Account",fontSize = 16.sp)
         }
@@ -138,7 +143,7 @@ fun SignupScreen(
         }
 
         TextButton(onClick = { navController.navigate("login?productId={productId}") }) {
-            Text("Already have an account? Log in",color = Color.White,fontSize = 18.sp)
+            Text("Already have an account? Log in",color = Color(0xFFA4284D),fontSize = 18.sp)
         }
     }
 }

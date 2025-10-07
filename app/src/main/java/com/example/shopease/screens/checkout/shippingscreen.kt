@@ -1,6 +1,7 @@
 package com.example.shopease.screens.checkout
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,9 +41,6 @@ fun ShippingInfoScreen(navController: NavController, viewModel: CheckoutViewMode
         viewModel.totalAmount = viewModel.originalAmount
     }
 
-    //Log.d("shipping", "originalAmount: ${viewModel.originalAmount}, totalAmount: ${viewModel.totalAmount}")
-
-
     val isFormValid = viewModel.name.isNotBlank() &&
             viewModel.address.isNotBlank() &&
             viewModel.city.isNotBlank() &&
@@ -58,135 +58,98 @@ fun ShippingInfoScreen(navController: NavController, viewModel: CheckoutViewMode
                 onSearchChange = {}
             )
         },
-        bottomBar = { BottomBar(navController) },
-        containerColor = Color(0xFFCDEFF5)
+        bottomBar = { BottomBar(navController) }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                    )
+                )
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Text("Shipping Details", fontSize = 25.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEC407A))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Full Name
-            OutlinedTextField(
-                value = viewModel.name,
-                onValueChange = { viewModel.name = it },
-                label = { Text("Full Name") },
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                )
+            // Title Card
+            Text(
+                text = "Shipping Details",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFEC407A),
+                modifier = Modifier
+                    .background(
+                        Color.White.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
             )
-
-            // Address
-            OutlinedTextField(
-                value = viewModel.address,
-                onValueChange = { viewModel.address = it },
-                label = { Text("Street Address") },
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                )
-            )
-
-            // City
-            OutlinedTextField(
-                value = viewModel.city,
-                onValueChange = { viewModel.city = it },
-                label = { Text("City") },
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                )
-            )
-
-            // State
-            OutlinedTextField(
-                value = viewModel.state,
-                onValueChange = { viewModel.state = it },
-                label = { Text("State") },
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                )
-            )
-
-            // Pincode
-            OutlinedTextField(
-                value = viewModel.pincode,
-                onValueChange = { viewModel.pincode = it },
-                label = { Text("Pincode") },
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                )
-            )
-
-            // Phone
-            OutlinedTextField(
-                value = viewModel.phone,
-                onValueChange = { viewModel.phone = it },
-                label = { Text("Phone Number") },
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                )
-            )
-
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Input Field Helper
+            @Composable
+            fun customTextField(value: String, label: String, onValueChange: (String) -> Unit) {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    label = { Text(label, color = Color.Gray) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .shadow(2.dp, RoundedCornerShape(12.dp))
+                )
+            }
+
+            customTextField(viewModel.name, "Full Name") { viewModel.name = it }
+            customTextField(viewModel.address, "Street Address") { viewModel.address = it }
+            customTextField(viewModel.city, "City") { viewModel.city = it }
+            customTextField(viewModel.state, "State") { viewModel.state = it }
+            customTextField(viewModel.pincode, "Pincode") { viewModel.pincode = it }
+            customTextField(viewModel.phone, "Phone Number") { viewModel.phone = it }
+
+            Spacer(modifier = Modifier.height(28.dp))
 
             Button(
                 onClick = {
                     if (isFormValid) {
+                        // Check if current input differs from the last saved user info
+                        user?.uid?.let { uid ->
+                            if (viewModel.hasAddressChanged()) {
+                                viewModel.updateUserAddressInFirebase(uid)
+                            }
+                        }
                         navController.navigate("payment_options")
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEC8D8)),
+                shape = RoundedCornerShape(16.dp),
                 enabled = isFormValid
             ) {
-                Text("Continue to Payment", color = Color(0xFFEC407A), fontSize = 18.sp)
+                Text(
+                    "Continue to Payment",
+                    color = Color(0xFFEC407A),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
+
         }
     }
 }
-
-
-

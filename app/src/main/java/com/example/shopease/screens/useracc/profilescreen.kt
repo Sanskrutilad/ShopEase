@@ -2,29 +2,34 @@ package com.example.shopease.screens.useracc
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.runtime.*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
-import androidx.compose.material3.*
-import androidx.compose.ui.unit.*
-import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.shopease.CartItem
 import com.example.shopease.Product
 import com.example.shopease.components.BottomBar
 import com.example.shopease.components.TopBar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
 import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-// Simple data class to hold order information with orderId
 data class OrderWithId(
     val orderId: String,
     val items: List<CartItem>? = null,
@@ -71,14 +76,9 @@ fun ProfileScreen(navController: NavController) {
                                 productOrders.add(OrderWithId(orderId, product = product, timestamp = timestamp,
                                     totalAmount = totalAmount, trackingId = trackingId, orderStatus = orderStatus))
                             }
-                        } else {
-                            // Fallback for orders without items/orderedItems
-                            cartOrders.add(OrderWithId(orderId, timestamp = timestamp,
-                                totalAmount = totalAmount, trackingId = trackingId, orderStatus = orderStatus))
                         }
                     }
                 }
-
                 override fun onCancelled(error: DatabaseError) {}
             })
 
@@ -88,7 +88,6 @@ fun ProfileScreen(navController: NavController) {
                     name = snapshot.child("fullName").getValue(String::class.java) ?: "N/A"
                     email = snapshot.child("email").getValue(String::class.java) ?: "N/A"
                 }
-
                 override fun onCancelled(error: DatabaseError) {
                     name = "Error loading name"
                     email = "Error loading email"
@@ -108,251 +107,224 @@ fun ProfileScreen(navController: NavController) {
             )
         },
         bottomBar = { BottomBar(navController) },
-        containerColor = Color(0xFFB2E4FF)
+        containerColor = Color.Transparent
     ) { innerPadding ->
+
         Column(
-            modifier = Modifier.background(Color(0xFFCDEFF5))
+            modifier = Modifier
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                    )
+                )
                 .padding(innerPadding)
-                .fillMaxSize().verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.Start
+                .verticalScroll(rememberScrollState())
+                .fillMaxSize().padding(20.dp)
+                ,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Profile", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEC407A))
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text("Name: $name", fontSize = 18.sp)
-            Text("Email: $email", fontSize = 18.sp)
-
-            Spacer(modifier = Modifier.height(24.dp))
-            val currentUser = FirebaseAuth.getInstance().currentUser
-
-            if (currentUser != null) {
-                // Logout Button
-                Button(
-                    onClick = {
-                        FirebaseAuth.getInstance().signOut()
-                        navController.navigate("login") {
-                            popUpTo("home") { inclusive = true }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC407A))
+            // 🌸 Profile Header Card
+            Card(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(Color(0xFFFFF9FB)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Logout", color = Color.White)
-                }
-            } else {
-                // Login Button
-                Button(
-                    onClick = {
-                        navController.navigate("login")
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC407A))
-                ) {
-                    Text("Login", color = Color.White)
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFEC407A)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = name.firstOrNull()?.uppercase() ?: "U",
+                            color = Color.White,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEC407A))
+                    Text(email, fontSize = 15.sp, color = Color(0xFF707070))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    Button(
+                        onClick = {
+                            if (currentUser != null) {
+                                FirebaseAuth.getInstance().signOut()
+                                navController.navigate("login") {
+                                    popUpTo("home") { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate("login")
+                            }
+                        },
+                        shape = RoundedCornerShape(40),
+                        colors = ButtonDefaults.buttonColors(Color(0xFFFF80A0)),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                    ) {
+                        Text(
+                            text = if (currentUser != null) "Logout" else "Login",
+                            color = Color.White,
+                            fontSize = 15.sp
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-            Text("🧾 Past Orders", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
+            Spacer(modifier = Modifier.height(24.dp))
+            Divider(thickness = 1.dp, color = Color(0xFFE6D7E7))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 🧾 Past Orders Section
+            Text("🧾 Past Orders", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (cartOrders.isEmpty() && productOrders.isEmpty()) {
+                Text(
+                    "No orders yet! Start shopping to see your orders here.",
+                    color = Color(0xFF888888),
+                    fontSize = 14.sp
+                )
+            } else {
+                cartOrders.forEach { order ->
+                    OrderCard(order = order, isCartOrder = true) {
+                        navController.navigate("order_tracking/${order.orderId}")
+                    }
+                }
+                productOrders.forEach { order ->
+                    OrderCard(order = order, isCartOrder = false) {
+                        navController.navigate("order_tracking/${order.orderId}")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+            Divider(thickness = 1.dp, color = Color(0xFFE6D7E7))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ℹ️ Help & Info Section
+            Text("ℹ️ Help & Info", fontSize = 21.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Display cart orders with click functionality
-            cartOrders.forEach { order ->
-                OrderCard(
-                    order = order,
-                    isCartOrder = true,
-                    onOrderClick = { orderId ->
-                        navController.navigate("order_tracking/$orderId")
-                    }
-                )
-            }
-
-            // Display product orders with click functionality
-            productOrders.forEach { order ->
-                OrderCard(
-                    order = order,
-                    isCartOrder = false,
-                    onOrderClick = { orderId ->
-                        navController.navigate("order_tracking/$orderId")
-                    }
-                )
-            }
-
-            // Show message if no orders
-            if (cartOrders.isEmpty() && productOrders.isEmpty()) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(Color.White),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column(
-                        Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("No orders yet!", fontSize = 16.sp, color = Color.Gray)
-                        Text("Start shopping to see your orders here", fontSize = 14.sp, color = Color.LightGray)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-            Text("ℹ️ Help & Info", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
-
-            Spacer(modifier = Modifier.height(16.dp))
             val showDialog = remember { mutableStateOf(false) }
             val selectedLabel = remember { mutableStateOf("") }
 
-            Column {
-                listOf("📖 FAQs", "📩 Contact Us", "\uD83E\uDD95 About Baby Dino").forEach { label ->
+            listOf("📖 FAQs", "📩 Contact Us", "\uD83D\uDECD\uFE0F About ShopEase").forEach { label ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clickable {
+                            selectedLabel.value = label
+                            showDialog.value = true
+                        },
+                    colors = CardDefaults.cardColors(Color(0xFFFFF9FB)),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
                     Text(
-                        label,
+                        text = label,
+                        modifier = Modifier.padding(16.dp),
                         fontSize = 16.sp,
-                        modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                selectedLabel.value = label
-                                showDialog.value = true
-                            }
+                        color = Color(0xFF444444)
                     )
                 }
             }
 
             if (showDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { showDialog.value = false },
-                    confirmButton = {
-                        TextButton(onClick = { showDialog.value = false }) {
-                            Text("OK", color = Color(0xFFEC407A))
-                        }
-                    },
-                    title = { Text(text = selectedLabel.value) },
-                    text = {
-                        Text(
-                            when (selectedLabel.value) {
-                                "📖 FAQs" -> """
-        Here are some frequently asked questions about Baby Dino:
-
-        1. What types of products do you offer?
-        We offer a curated range of kids' products (toys, books, stationery) and women's accessories 
-        (purses, skincare, keychains, etc.) with a focus on quality and affordability.
-
-        2. How long does delivery usually take?
-        Our delivery time typically ranges from 2 to 5 business days, depending on your location. 
-        You'll receive tracking updates after your order is placed.
-
-        3. Can I return a product?
-        We only accept returns if the product is received in a damaged or broken condition. 
-        Please report it within 24 hours with proper photo or video proof.
-
-    """.trimIndent()
-
-                                "📩 Contact Us" -> """
-        You can reach out to us:
-
-        📞 Contact: 8209029726
-        📧 Email: babydinoindia01@gmail.com
-    """.trimIndent()
-
-                                "\uD83E\uDD95 About Baby Dino" -> """
-        Baby Dino is your go-to app for delightful kids and women products!
-        We bring you affordable, quality products with fast delivery and great support.
-    """.trimIndent()
-
-                                else -> ""
-                            },
-                            color = Color.Black
-                        )
-                    },
-                    containerColor = Color(0xFFFEC8D8)
-                )
+                InfoDialog(selectedLabel.value) { showDialog.value = false }
             }
         }
+
     }
 }
 
 @Composable
-fun OrderCard(
-    order: OrderWithId,
-    isCartOrder: Boolean,
-    onOrderClick: (String) -> Unit
-) {
-    val date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(order.timestamp))
+fun InfoDialog(label: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("OK", color = Color(0xFFEC407A)) }
+        },
+        title = { Text(label) },
+        text = {
+            Text(
+                when (label) {
+                    "📖 FAQs" -> "We offer quality kids & women's products delivered within 2–5 days. Returns are accepted only if damaged."
+                    "📩 Contact Us" -> "📞 94233-66903\n📧 shopease@gmail.com"
+                    "\uD83D\uDECD\uFE0F About ShopEase" -> "Your go-to app for e-books and cute, affordable, and quality kids & women products!"
+                    else -> ""
+                },
+                color = Color.Black
+            )
+        },
+        containerColor = Color(0xFFFFE6EB)
+    )
+}
 
+@Composable
+fun OrderCard(order: OrderWithId, isCartOrder: Boolean, onOrderClick: (String) -> Unit) {
+    val date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(order.timestamp))
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
             .clickable { onOrderClick(order.orderId) },
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(Color.White),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
-            // Order header with status and click indicator
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
                     Text("📅 $date", fontWeight = FontWeight.SemiBold)
-                    order.trackingId?.let { trackingId ->
-                        Text("Tracking: $trackingId", fontSize = 12.sp, color = Color.Gray)
-                    }
+                    Text("Tracking: ${order.trackingId ?: "N/A"}", fontSize = 12.sp, color = Color.Gray)
                 }
-
-                // Status indicator
                 OrderStatusIndicator(order.orderStatus ?: "confirmed")
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
-            // Order items
             if (isCartOrder && order.items != null) {
-                order.items.forEach { item ->
-                    Text("• ${item.name} x${item.quantity}")
-                    if (!item.ebookUrl.isNullOrEmpty()) {
-                        Text("   📘 eBook available", color = Color(0xFF4A7C59), fontSize = 12.sp)
-                    }
-                }
+                order.items.forEach { item -> Text("• ${item.name} x${item.quantity}") }
             } else if (!isCartOrder && order.product != null) {
                 Text("• ${order.product.name}")
-                if (!order.product.ebookUrl.isNullOrEmpty()) {
-                    Text("   📘 eBook available", color = Color(0xFF4A7C59), fontSize = 12.sp)
-                }
-            } else {
-                Text("• Order details loading...", color = Color.Gray)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Total: ₹${order.totalAmount}", fontWeight = FontWeight.SemiBold, color = Color(0xFFEC407A))
-            Text("Tap to track order →", fontSize = 12.sp, color = Color.Gray, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+            Text("Total: ₹${order.totalAmount}", fontWeight = FontWeight.Bold, color = Color(0xFFEC407A))
+            Text("Tap to track →", fontSize = 12.sp, color = Color.Gray, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
         }
     }
 }
 
 @Composable
-fun OrderStatusIndicator(orderStatus: String) {
-    val (statusText, statusColor) = when (orderStatus) {
+fun OrderStatusIndicator(status: String) {
+    val (text, color) = when (status) {
         "delivered" -> "Delivered" to Color(0xFF4CAF50)
         "shipped" -> "Shipped" to Color(0xFF2196F3)
         "out_for_delivery" -> "Out for Delivery" to Color(0xFFFF9800)
         "packed" -> "Packed" to Color(0xFF9C27B0)
         else -> "Confirmed" to Color(0xFF607D8B)
     }
-
     Box(
         modifier = Modifier
-            .background(statusColor.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp))
+            .background(color.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Text(
-            text = statusText,
-            color = statusColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
-        )
+        Text(text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }

@@ -1,13 +1,16 @@
 package com.example.shopease.screens.checkout
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,40 +30,84 @@ fun OrderConfirmationScreen(
     checkoutViewModel: CheckoutViewModel = viewModel()
 ) {
     Scaffold(
-        topBar = {
-            TopBar(navController, false, "", {}, {})
-        },
+        topBar = { TopBar(navController, false, "", {}, {}) },
         bottomBar = {
-            BottomBar(navController)
-        },containerColor = Color(0xFFCDEFF5)
+            // Empty for now, button will be fixed inside column
+            Spacer(modifier = Modifier.height(0.dp))
+        }
     ) { innerPadding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                    )
+                )
+                .padding(24.dp)
         ) {
-            Text("🎉 Thank You!", fontSize = 28.sp, fontWeight = FontWeight.Bold, color =Color(0xFFEC407A))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "🎉 Thank You!",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFEC407A)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Your order has been placed successfully.",
+                    fontSize = 16.sp,
+                    color = Color(0xFFEC407A)
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Your order has been placed successfully.",color = Color(0xFFEC407A))
-            Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Name: ${checkoutViewModel.name}")
-            Text("Address: ${checkoutViewModel.address} ,${checkoutViewModel.city},${checkoutViewModel.state},${checkoutViewModel.pincode} ")
-            Text("Phone: ${checkoutViewModel.phone}")
-            Text("Total Amount: ₹${checkoutViewModel.totalAmount}")
+            // User Details Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE6F0)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "📌 Shipping Details",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color(0xFFEC407A)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Name: ${checkoutViewModel.name}")
+                    Text("Phone: ${checkoutViewModel.phone}")
+                    Text("Address: ${checkoutViewModel.address}, ${checkoutViewModel.city}, ${checkoutViewModel.state}, ${checkoutViewModel.pincode}")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Total Amount: ₹${checkoutViewModel.totalAmount}",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Ordered Items:", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+
+            Text(
+                "Ordered Items",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color(0xFFEC407A)
+            )
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Scrollable ordered items
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Show Product (Buy Now)
                 if (checkoutViewModel.orderedItems.isNotEmpty()) {
@@ -78,10 +125,9 @@ fun OrderConfirmationScreen(
                 }
             }
 
-
-
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Fixed Back to Home button
             Button(
                 onClick = {
                     checkoutViewModel.name = ""
@@ -90,26 +136,37 @@ fun OrderConfirmationScreen(
                     checkoutViewModel.totalAmount = 0.0
                     checkoutViewModel.orderedItems = emptyList()
                     checkoutViewModel.cartOrderedItems = emptyList()
-                    // Navigate back to home
+
                     navController.navigate("homescreen") {
                         popUpTo("order_confirmation") { inclusive = true }
                     }
                 },
-                colors = ButtonDefaults.buttonColors(Color(0xFFFEC8D8))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEC8D8)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Back to Home",  fontSize = 18.sp,color =Color(0xFFEC407A))
+                Text(
+                    "Back to Home",
+                    fontSize = 18.sp,
+                    color = Color(0xFFEC407A)
+                )
             }
-
         }
     }
 }
+
+
 @Composable
 fun OrderCartItem(cartItem: CartItem, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -147,8 +204,10 @@ fun OrderProductItem(product: Product, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp).clickable{},
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8E8E1))
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8E8E1)),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),

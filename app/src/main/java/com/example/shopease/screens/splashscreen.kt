@@ -15,7 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.example.shopease.R
 
 
 @Composable
@@ -42,16 +44,20 @@ fun SplashScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Transparent),
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFF0F5), Color(0xFFE3F2FD))
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
-//        Image(
-//            painter = painterResource(id = R.drawable.babydinologo),
-//            contentDescription = "baby dino Logo",
-//            modifier = Modifier
-//                .scale(scale)
-//                .alpha(alpha)
-//                .size(200.dp)
-//        )
+        Image(
+            painter = painterResource(id = R.drawable.shopeaselogo),
+            contentDescription = "baby dino Logo",
+            modifier = Modifier
+                .scale(scale)
+                .alpha(alpha)
+                .size(200.dp)
+        )
     }
 }
